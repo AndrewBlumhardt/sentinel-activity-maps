@@ -1,0 +1,54 @@
+# Data source configuration for threat intelligence queries
+# Each source defines a KQL query against Log Analytics and output settings
+
+sources:
+  - id: signin_failures
+    name: "Sign-in Failures"
+    enabled: true
+    refresh_interval_seconds: 300  # 5 minutes
+    query_time_window_hours: 24
+    incremental: true
+    incremental_overlap_minutes: 10
+    output_filename: "signin-failures.tsv"
+    kql_query: |
+      SigninLogs
+      | where TimeGenerated >= ago({time_window}h)
+      | where ResultType != "0"  // Failed sign-ins
+      | extend Country = tostring(LocationDetails.countryOrRegion)
+      | extend City = tostring(LocationDetails.city)
+      | extend IPAddress = tostring(IPAddress)
+      | project TimeGenerated, UserPrincipalName, IPAddress, Country, City, ResultType, ResultDescription
+      | order by TimeGenerated desc
+    columns:
+      - TimeGenerated
+      - UserPrincipalName
+      - IPAddress
+      - Country
+      - City
+      - ResultType
+      - ResultDescription
+
+  - id: threat_intel_indicators
+    name: "Threat Intelligence Indicators"
+    enabled: true
+    refresh_interval_seconds: 600  # 10 minutes
+    query_time_window_hours: 168  # 7 days
+    incremental: true
+    incremental_overlap_minutes: 30
+    output_filename: "threat-intel-indicators.tsv"
+    kql_query: |
+      ThreatIntelligenceIndicator
+      | where TimeGenerated >= ago({time_window}h)
+      | where isnotempty(NetworkIP) or isnotempty(NetworkSourceIP) or isnotempty(NetworkDestinationIP)
+      | extend IP = coalesce(NetworkIP, NetworkSourceIP, NetworkDestinationIP)
+      | extend ThreatType = tostring(ThreatType)
+      | extend Confidence = tostring(ConfidenceScore)
+      | project TimeGenerated, IP, ThreatType, Confidence, Description, Tags
+      | order by TimeGenerated desc
+    columns:
+      - TimeGenerated
+      - IP
+      - ThreatType
+      - Confidence
+      - Description
+      - Tags

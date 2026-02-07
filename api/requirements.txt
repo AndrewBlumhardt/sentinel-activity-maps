@@ -1,0 +1,7 @@
+# Azure Functions Python dependencies
+azure-functions>=1.18.0
+azure-identity>=1.15.0
+azure-storage-blob>=12.19.0
+azure-monitor-query>=1.3.0
+PyYAML>=6.0.1
+python-dateutil>=2.8.2
