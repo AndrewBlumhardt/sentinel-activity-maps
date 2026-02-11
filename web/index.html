@@ -37,16 +37,6 @@
 
     <!-- Map container -->
     <main id="mapHost" class="map-host">
-      <!-- Map controls -->
-      <div style="position: absolute; top: 10px; right: 10px; z-index: 1000; display: flex; gap: 8px;">
-        <button id="showActorsBtn" type="button" style="padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-          🗺️ Threat Actors
-        </button>
-        <button id="showIntelBtn" type="button" style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-          🔴 Threat Intel
-        </button>
-      </div>
-      
       <!-- Floating close button for left panel -->
       <button id="floatingPanelCloseBtn" class="floating-panel-close hidden" type="button" title="Close threat details panel">
         ✕ Close Details Panel
@@ -82,10 +72,7 @@
 
   </div>
 
-  <!-- Configuration -->
-  <script src="./config.js"></script>
-  
   <!-- App entry point -->
-  <script src="./src/app.js"></script>
+  <script type="module" src="./src/app.js"></script>
 </body>
 </html>

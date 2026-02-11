@@ -52,22 +52,203 @@ body {
   font-size: 14px;
 }
 
-/* Optional debug panel 
-#debug {
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* App Shell */
+.app-shell {
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Left panel for threat details */
+.left-panel {
   position: absolute;
-  left: 12px;
-  bottom: 12px;
-  max-width: 520px;
-  max-height: 160px;
-  overflow: auto;
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.55);
+  left: 0;
+  top: 0;
+  width: 360px;
+  height: 100%;
+  background: rgba(17, 24, 39, 0.96);
+  backdrop-filter: blur(12px);
   color: #fff;
-  font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  pointer-events: none;
-} */
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(59, 130, 246, 0.2);
+  transition: transform 0.25s ease;
+  z-index: 1000;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+}
+
+.left-panel.hidden {
+  transform: translateX(-100%);
+}
+
+.panel-header {
+  padding: 12px 12px 16px 12px;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #60a5fa;
+  padding-top: 20px;
+}
+
+.panel-header button {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.panel-header button:hover {
+  transform: scale(1.02);
+}
+
+#showThreatMapBtn:hover {
+  background: #059669 !important;
+}
+
+#panelHideBtn:hover {
+  background: #dc2626 !important;
+}
+
+/* Floating close button for left panel - hidden */
+.floating-panel-close {
+  display: none !important;
+  position: fixed !important;
+  top: 100px !important;
+  left: 380px !important;
+  z-index: 99999 !important;
+  padding: 16px 28px !important;
+  background: #dc2626 !important;
+  backdrop-filter: blur(8px);
+  border: 4px solid #ffffff !important;
+  border-radius: 8px;
+  color: white !important;
+  cursor: pointer;
+  font-size: 18px !important;
+  font-weight: 700;
+  transition: all 0.2s;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.floating-panel-close:hover {
+  background: #b91c1c;
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+  border-color: #fef2f2;
+}
+
+.floating-panel-close.hidden {
+  display: none;
+}
+
+/* Color legend for country view */
+.country-legend {
+  position: absolute;
+  bottom: 120px;
+  left: 20px;
+  z-index: 500;
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: white;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.country-legend.hidden {
+  display: none;
+}
+
+.country-legend h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #60a5fa;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.legend-color {
+  width: 24px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.legend-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.panel-meta {
+  padding: 14px 20px;
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.panel-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.panel-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.panel-list::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 3px;
+}
+
+.panel-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+/* Map host takes full space */
+.map-host {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.map-host #map {
+  width: 100%;
+  height: 100%;
+}
 
 @keyframes spin {
   to { transform: rotate(360deg); }
