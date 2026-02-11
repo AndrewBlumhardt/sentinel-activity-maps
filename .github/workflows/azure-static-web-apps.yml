@@ -33,7 +33,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "/web"
-          api_location: ""
+          api_location: "/web/api"
           output_location: ""
           skip_app_build: true
 

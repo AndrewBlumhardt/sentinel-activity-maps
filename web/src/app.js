@@ -3,17 +3,49 @@
  * Simple threat intelligence visualization using Azure Maps
  */
 
-// Load configuration
-const azureMapsKey = window.mapConfig?.azureMapsKey || config?.azureMapsKey || '';
-const geoJsonUrl = window.mapConfig?.threatIntelGeoJsonUrl || config?.threatIntelGeoJsonUrl || '';
+let appConfig = null;
+
+// Fetch configuration from API
+async function loadConfig() {
+  try {
+    const response = await fetch('/api/config');
+    if (response.ok) {
+      appConfig = await response.json();
+      console.log('Configuration loaded from API');
+      return appConfig;
+    } else {
+      console.warn('Failed to load config from API, using fallback');
+      // Fallback to static config
+      appConfig = window.mapConfig || config || {};
+      return appConfig;
+    }
+  } catch (error) {
+    console.warn('Error loading config from API:', error);
+    // Fallback to static config
+    appConfig = window.mapConfig || config || {};
+    return appConfig;
+  }
+}
 
 // Initialize the map
 async function initMap() {
+  // Load configuration first
+  const cfg = await loadConfig();
+  
+  const azureMapsKey = cfg.azureMapsKey || '';
+  const geoJsonUrl = `${cfg.storageAccountUrl}/${cfg.datasetsContainer}/threat-intel-indicators.geojson`;
+
   if (!azureMapsKey) {
     console.error('Azure Maps key not configured');
     alert('Azure Maps configuration missing. Please check application settings.');
     return;
   }
+
+  console.log('Initializing map with config:', {
+    hasKey: !!azureMapsKey,
+    storageUrl: cfg.storageAccountUrl,
+    dataUrl: geoJsonUrl
+  });
 
   // Create the map
   const map = new atlas.Map('map', {
@@ -42,7 +74,7 @@ async function initMap() {
         if (response.ok) {
           const geojson = await response.json();
           dataSource.add(geojson);
-          console.log('Threat intelligence data loaded');
+          console.log('Threat intelligence data loaded:', geojson.features?.length || 0, 'features');
         } else {
           console.warn('Failed to load threat data:', response.status);
         }
