@@ -1,5 +1,6 @@
 import { createMap } from "./map/map-init.js";
 import { addThreatActorsToggle } from "./ui/threatActorsToggle.js";
+import { addThreatIntelToggle } from "./ui/threatIntelToggle.js";
 import { showCountryDetails, initPanelControls } from "./ui/panelManager.js";
 import { addAutoScrollControl } from "./ui/autoScroll.js";
 
@@ -19,6 +20,7 @@ async function main() {
     addThreatActorsToggle(map, (countryProps) => {
       showCountryDetails(countryProps);
     });
+    addThreatIntelToggle(map);
     addAutoScrollControl(map);
   });
 
