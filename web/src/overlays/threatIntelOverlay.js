@@ -14,6 +14,7 @@ let isEnabled = false;
  * Toggle the threat intel overlay on or off
  */
 export async function toggleThreatIntelOverlay(map, turnOn) {
+  console.log("toggleThreatIntelOverlay called with turnOn =", turnOn);
   if (turnOn) {
     await enable(map);
   } else {
@@ -25,18 +26,23 @@ export async function toggleThreatIntelOverlay(map, turnOn) {
  * Enable the overlay - fetch and display GeoJSON from blob storage
  */
 async function enable(map) {
+  console.log("enable() called, isEnabled =", isEnabled);
   if (isEnabled) return;
 
   try {
     console.log("Loading threat intel indicators from API...");
 
     // Fetch GeoJSON from blob storage via API proxy
+    console.log("Fetching from /api/data/threat-intel...");
     const response = await fetch("/api/data/threat-intel");
+    console.log("API response status:", response.status, response.statusText);
+    
     if (!response.ok) {
       throw new Error(`Failed to load threat intel: ${response.status} ${response.statusText}`);
     }
 
     const geojson = await response.json();
+    console.log("GeoJSON loaded:", geojson);
     
     if (!geojson.features || geojson.features.length === 0) {
       console.warn("No threat intel indicators found");

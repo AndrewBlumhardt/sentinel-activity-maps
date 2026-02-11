@@ -26,14 +26,18 @@ export function addThreatIntelToggle(map) {
 
   let on = false;
   const toggleBtn = wrap.querySelector("#tiToggle");
+  
+  console.log("Threat Intel toggle initialized:", toggleBtn ? "button found" : "button NOT found");
 
   async function applyVisualization() {
+    console.log("applyVisualization called, on =", on);
     toggleBtn.disabled = true;
 
     try {
       await toggleThreatIntelOverlay(map, on);
       toggleBtn.textContent = on ? "On" : "Off";
       toggleBtn.style.background = on ? "#10b981" : "#3b82f6";
+      console.log("Threat intel visualization applied successfully");
     } catch (e) {
       console.error("Threat intel toggle failed:", e);
       const msg = e?.message || String(e);
@@ -47,6 +51,7 @@ export function addThreatIntelToggle(map) {
   }
 
   toggleBtn.addEventListener("click", async () => {
+    console.log("Threat intel button clicked!");
     on = !on;
     await applyVisualization();
   });
