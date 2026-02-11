@@ -41,3 +41,9 @@ htmlcov/
 # Environment files
 .env
 .env.local
+
+# Deployment artifacts
+*.zip
+*.lock
+deployment.zip
+function-app.zip
