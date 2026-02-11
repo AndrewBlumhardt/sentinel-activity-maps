@@ -33,8 +33,8 @@ async function enable(map) {
     console.log("Loading threat intel indicators from API...");
 
     // Fetch GeoJSON from blob storage via API proxy
-    console.log("Fetching from /api/data/threat-intel...");
-    const response = await fetch("/api/data/threat-intel");
+    console.log("Fetching from /api/data/threat-intel-indicators...");
+    const response = await fetch("/api/data/threat-intel-indicators");
     console.log("API response status:", response.status, response.statusText);
     
     if (!response.ok) {
