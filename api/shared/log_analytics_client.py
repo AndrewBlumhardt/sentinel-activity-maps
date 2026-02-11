@@ -68,7 +68,8 @@ class LogAnalyticsClient:
                 results = []
                 if response.tables:
                     table = response.tables[0]
-                    columns = [col.name for col in table.columns]
+                    # Handle both column objects and string column names
+                    columns = [col.name if hasattr(col, 'name') else str(col) for col in table.columns]
                     
                     for row in table.rows:
                         row_dict = {columns[i]: row[i] for i in range(len(columns))}
@@ -86,7 +87,8 @@ class LogAnalyticsClient:
                 results = []
                 if response.partial_data and response.partial_data.tables:
                     table = response.partial_data.tables[0]
-                    columns = [col.name for col in table.columns]
+                    # Handle both column objects and string column names
+                    columns = [col.name if hasattr(col, 'name') else str(col) for col in table.columns]
                     for row in table.rows:
                         row_dict = {columns[i]: row[i] for i in range(len(columns))}
                         results.append(row_dict)

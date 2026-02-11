@@ -213,7 +213,7 @@ class BlobStorageClient:
                 blob=lock_filename
             )
             
-            lease_client = blob_client.get_blob_lease_client(lease_id)
+            lease_client = blob_client.from_blob_lease(lease_id)
             lease_client.release()
             
             logger.info(f"Released lock for {source_id}")

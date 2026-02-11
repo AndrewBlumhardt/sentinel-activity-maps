@@ -24,6 +24,9 @@ class DataSource:
         self.output_filename = config['output_filename']
         self.kql_query = config['kql_query']
         self.columns = config.get('columns', [])
+        self.auto_enrich_geo = config.get('auto_enrich_geo', False)
+        self.auto_generate_geojson = config.get('auto_generate_geojson', False)
+        self.refresh_threshold_hours = config.get('refresh_threshold_hours', 24)
     
     def get_query(self, time_window_hours: int = None) -> str:
         """
@@ -64,10 +67,19 @@ class ConfigLoader:
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 config = yaml.safe_load(f)
             
+            # Load global settings
+            self.geo_provider = config.get('geo_provider', 'maxmind')
+            
+            # Key Vault name: Try YAML first, then environment variable
+            self.key_vault_name = config.get('key_vault_name', '') or os.getenv('KEY_VAULT_NAME', '')
+            
             sources_config = config.get('sources', [])
             self._sources = [DataSource(src) for src in sources_config]
             
             logger.info(f"Loaded {len(self._sources)} data sources from {self.config_path}")
+            logger.info(f"Geo provider: {self.geo_provider}")
+            if self.key_vault_name:
+                logger.info(f"Key Vault: {self.key_vault_name}")
         except Exception as e:
             logger.error(f"Failed to load config from {self.config_path}: {e}")
             raise
@@ -88,12 +100,13 @@ class ConfigLoader:
             source_id: The source ID to retrieve
             
         Returns:
-            DataSource object
-            
-        Raises:
-            ValueError: If source ID not found
+            DataSource object or None if not found
         """
         for source in self._sources:
             if source.id == source_id:
                 return source
-        raise ValueError(f"Data source '{source_id}' not found in configuration")
+        return None
+    
+    def get_source(self, source_id: str) -> DataSource:
+        """Alias for get_source_by_id for convenience."""
+        return self.get_source_by_id(source_id)

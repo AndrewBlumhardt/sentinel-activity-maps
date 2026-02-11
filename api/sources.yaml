@@ -1,10 +1,18 @@
 # Data source configuration for threat intelligence queries
 # Each source defines a KQL query against Log Analytics and output settings
 
+# Geo enrichment provider: "maxmind" (full coordinates) or "azure_maps" (country-only)
+# MaxMind requires: MAXMIND_LICENSE_KEY from Key Vault or environment variable
+# Azure Maps requires: AZURE_MAPS_SUBSCRIPTION_KEY environment variable
+geo_provider: "maxmind"  # Options: "maxmind", "azure_maps"
+
+# Key Vault settings (optional - falls back to environment variables)
+key_vault_name: ""  # e.g., "kv-sentinel-maps" - leave empty to use env vars
+
 sources:
   - id: signin_failures
     name: "Sign-in Failures"
-    enabled: true
+    enabled: false  # Disabled - template example only
     refresh_interval_seconds: 300  # 5 minutes
     query_time_window_hours: 24
     incremental: true
@@ -31,24 +39,33 @@ sources:
   - id: threat_intel_indicators
     name: "Threat Intelligence Indicators"
     enabled: true
-    refresh_interval_seconds: 600  # 10 minutes
-    query_time_window_hours: 168  # 7 days
+    refresh_threshold_hours: 24  # Refresh if file older than this (configurable)
+    query_time_window_hours: 360  # 15 days (initial lookback and max refresh window)
     incremental: true
     incremental_overlap_minutes: 30
     output_filename: "threat-intel-indicators.tsv"
+    auto_enrich_geo: true  # Automatically enrich with geolocation after refresh
+    auto_generate_geojson: true  # Automatically generate GeoJSON after geo enrichment
     kql_query: |
-      ThreatIntelligenceIndicator
-      | where TimeGenerated >= ago({time_window}h)
-      | where isnotempty(NetworkIP) or isnotempty(NetworkSourceIP) or isnotempty(NetworkDestinationIP)
-      | extend IP = coalesce(NetworkIP, NetworkSourceIP, NetworkDestinationIP)
-      | extend ThreatType = tostring(ThreatType)
-      | extend Confidence = tostring(ConfidenceScore)
-      | project TimeGenerated, IP, ThreatType, Confidence, Description, Tags
+      ThreatIntelIndicators
+      | extend Description = Data.description
+      | extend Type = parse_json(tostring(Data.indicator_types))[0]
+      | extend Label = parse_json(tostring(Data.labels))[0]
+      | summarize arg_max(TimeGenerated, *) by ObservableValue
+      | where Pattern contains "network"
+      | project TimeGenerated, ObservableValue, SourceSystem, Type, Label, Confidence, Description, Created, IsActive
       | order by TimeGenerated desc
     columns:
       - TimeGenerated
-      - IP
-      - ThreatType
+      - ObservableValue
+      - SourceSystem
+      - Type
+      - Label
       - Confidence
       - Description
-      - Tags
+      - Created
+      - IsActive
+      - Latitude
+      - Longitude
+      - Country
+      - City

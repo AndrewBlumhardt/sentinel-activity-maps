@@ -2,6 +2,60 @@
 
 Python-based Azure Functions backend for the Sentinel Activity Maps project. This function queries Azure Log Analytics (Microsoft Sentinel) and exports threat intelligence data to Azure Blob Storage as TSV files for consumption by the frontend Static Web App.
 
+## 🚀 Quick Deploy
+
+Deploy to Azure in ~5 minutes with one command:
+
+**PowerShell:**
+```powershell
+.\deploy.ps1 -WorkspaceId "YOUR-WORKSPACE-ID"
+
+# For Azure Government (GCC/GCC-High)
+.\deploy.ps1 -WorkspaceId "YOUR-WORKSPACE-ID" -Cloud AzureUSGovernment
+```
+
+**Bash:**
+```bash
+./deploy.sh --workspace-id "YOUR-WORKSPACE-ID"
+
+# For Azure Government (GCC/GCC-High)
+./deploy.sh --workspace-id "YOUR-WORKSPACE-ID" --cloud AzureUSGovernment
+```
+
+**Requirements:** Owner or Contributor role on subscription or target resource group
+
+👉 **[Full Deployment Guide](DEPLOYMENT.md)** | **[Local Development](LOCAL_DEVELOPMENT.md)** | **[Quick Start](QUICKSTART.md)**
+
+## 🔄 Update Function Code
+
+After initial deployment, use these scripts for quick code-only updates:
+
+**PowerShell:**
+```powershell
+.\update-function.ps1 -FunctionAppName "sentinel-activity-maps-func-12345"
+
+# For Azure Government
+.\update-function.ps1 -FunctionAppName "your-func-name" -Cloud AzureUSGovernment
+```
+
+**Bash:**
+```bash
+./update-function.sh --function-app "sentinel-activity-maps-func-12345"
+
+# For Azure Government
+./update-function.sh --function-app "your-func-name" --cloud AzureUSGovernment
+```
+
+**What these scripts do:**
+- ✅ Only update function code (faster than full deployment)
+- ✅ Don't modify app settings or infrastructure
+- ✅ Automatically restart and warm up the function app
+- ✅ Support both Azure Commercial and Government clouds
+
+**Note:** Allow 30-60 seconds after deployment for the function to fully start (cold start). If you get 404 errors immediately after deployment, wait a minute and try again.
+
+**For CI/CD:** Use the GitHub Actions workflow at `.github/workflows/deploy-function.yml` for automated deployments on every push.
+
 ## 🎯 Purpose
 
 - **HTTP-triggered** Azure Function that refreshes threat intelligence datasets
@@ -144,104 +198,44 @@ Set these in Azure Function App Configuration:
 | `DEFAULT_QUERY_TIME_WINDOW_HOURS` | Default query window | `24` |
 | `INCREMENTAL_OVERLAP_MINUTES` | Overlap for incremental queries | `10` |
 
-## 🔐 Azure Setup & Permissions
+## � Deployment to Azure
 
-### 1. Create Resources
+### Quick Deploy (Automated - Recommended)
 
-```bash
-RESOURCE_GROUP="rg-sentinel-activity-maps"
-LOCATION="eastus"
-FUNCTION_APP_NAME="sentinel-activity-maps-func"
-STORAGE_ACCOUNT="sentinelmapssa"  # Must be globally unique
-WORKSPACE_ID="<your-log-analytics-workspace-id>"
+The easiest way to deploy is using the provided automated scripts:
 
-# Create resource group
-az group create --name $RESOURCE_GROUP --location $LOCATION
-
-# Create storage account
-az storage account create \
-  --name $STORAGE_ACCOUNT \
-  --resource-group $RESOURCE_GROUP \
-  --location $LOCATION \
-  --sku Standard_LRS
-
-# Create containers
-STORAGE_CONN=$(az storage account show-connection-string \
-  --name $STORAGE_ACCOUNT --resource-group $RESOURCE_GROUP --query connectionString -o tsv)
-
-az storage container create --name datasets --connection-string $STORAGE_CONN
-az storage container create --name locks --connection-string $STORAGE_CONN
-
-# Create Function App
-az functionapp create \
-  --resource-group $RESOURCE_GROUP \
-  --name $FUNCTION_APP_NAME \
-  --storage-account $STORAGE_ACCOUNT \
-  --consumption-plan-location $LOCATION \
-  --runtime python \
-  --runtime-version 3.11 \
-  --functions-version 4 \
-  --os-type Linux
+**PowerShell (Windows):**
+```powershell
+.\deploy.ps1 -WorkspaceId "YOUR-WORKSPACE-ID-HERE"
 ```
 
-### 2. Enable Managed Identity
-
+**Bash (Linux/macOS/WSL):**
 ```bash
-az functionapp identity assign \
-  --name $FUNCTION_APP_NAME \
-  --resource-group $RESOURCE_GROUP
-
-# Get the principal ID
-MI_PRINCIPAL_ID=$(az functionapp identity show \
-  --name $FUNCTION_APP_NAME \
-  --resource-group $RESOURCE_GROUP \
-  --query principalId -o tsv)
+./deploy.sh --workspace-id "YOUR-WORKSPACE-ID-HERE"
 ```
 
-### 3. Assign RBAC Permissions
+The script will create:
+- Resource Group
+- Storage Account with `datasets` and `locks` containers
+- Function App (Python 3.11, Linux, Consumption plan)
+- Managed Identity with required RBAC roles
+- Deploy function code
 
-**Log Analytics Reader** (for querying):
-```bash
-WORKSPACE_RESOURCE_ID="/subscriptions/<subscription-id>/resourceGroups/<workspace-rg>/providers/Microsoft.OperationalInsights/workspaces/<workspace-name>"
+**Time to deploy:** ~5 minutes
 
-az role assignment create \
-  --assignee $MI_PRINCIPAL_ID \
-  --role "Log Analytics Reader" \
-  --scope $WORKSPACE_RESOURCE_ID
-```
+### Manual Deployment
 
-**Storage Blob Data Contributor** (for writing TSVs):
-```bash
-STORAGE_RESOURCE_ID=$(az storage account show \
-  --name $STORAGE_ACCOUNT \
-  --resource-group $RESOURCE_GROUP \
-  --query id -o tsv)
+For step-by-step manual deployment instructions, see **[DEPLOYMENT.md](./DEPLOYMENT.md)**
 
-az role assignment create \
-  --assignee $MI_PRINCIPAL_ID \
-  --role "Storage Blob Data Contributor" \
-  --scope $STORAGE_RESOURCE_ID
-```
+The manual guide includes:
+- Detailed Azure CLI commands for each resource
+- Troubleshooting common issues
+- Post-deployment verification steps
+- Alternative deployment methods
 
-### 4. Configure Function App Settings
+### CI/CD Deployment (GitHub Actions)
 
-```bash
-az functionapp config appsettings set \
-  --name $FUNCTION_APP_NAME \
-  --resource-group $RESOURCE_GROUP \
-  --settings \
-    "LOG_ANALYTICS_WORKSPACE_ID=$WORKSPACE_ID" \
-    "STORAGE_ACCOUNT_URL=https://${STORAGE_ACCOUNT}.blob.core.windows.net" \
-    "STORAGE_CONTAINER_DATASETS=datasets" \
-    "STORAGE_CONTAINER_LOCKS=locks" \
-    "DEFAULT_REFRESH_INTERVAL_SECONDS=300" \
-    "DEFAULT_QUERY_TIME_WINDOW_HOURS=24" \
-    "INCREMENTAL_OVERLAP_MINUTES=10"
-```
-
-## 🚢 Deployment
-
-### Option 1: GitHub Actions (Recommended)
+For automated deployments on every push to `main`:
 
 1. **Setup OIDC (Federated Credentials)** - No secrets needed:
    ```bash
@@ -284,18 +278,76 @@ az functionapp config appsettings set \
    git push origin main
    ```
 
-### Option 2: Azure CLI (Manual)
+**See [.github/workflows/deploy-function.yml](.github/workflows/deploy-function.yml) for workflow details**
+
+## 🧪 Testing & Verification
+
+After deployment, verify the function is working:
 
 ```bash
-cd api
-func azure functionapp publish $FUNCTION_APP_NAME
+# Test health endpoint
+curl https://YOUR-FUNCTION-APP.azurewebsites.net/api/health
+
+# Trigger a refresh
+curl -X POST https://YOUR-FUNCTION-APP.azurewebsites.net/api/refresh
+
+# Check logs
+az functionapp log tail --name YOUR-FUNCTION-APP --resource-group YOUR-RESOURCE-GROUP
 ```
 
-### Option 3: VS Code
+Verify TSV files were created:
+```bash
+az storage blob list \
+    --container-name datasets \
+    --account-name YOUR-STORAGE-ACCOUNT \
+    --output table
+```
 
-1. Install [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions)
-2. Right-click `api` folder → "Deploy to Function App..."
-3. Select your function app
+## ⚙️ Post-Deployment Configuration
+
+### Assign Log Analytics Reader Role
+
+The deployment scripts assign the Storage role automatically, but you must manually assign Log Analytics Reader:
+
+```bash
+# Get the Function App's managed identity principal ID
+PRINCIPAL_ID=$(az functionapp identity show \
+    --name YOUR-FUNCTION-APP \
+    --resource-group YOUR-RESOURCE-GROUP \
+    --query principalId -o tsv)
+
+# Assign Log Analytics Reader role
+az role assignment create \
+    --assignee $PRINCIPAL_ID \
+    --role "Log Analytics Reader" \
+    --scope "/subscriptions/<sub-id>/resourceGroups/<workspace-rg>/providers/Microsoft.OperationalInsights/workspaces/<workspace-name>"
+```
+
+Or via Azure Portal:
+1. Navigate to your Log Analytics Workspace → Access control (IAM)
+2. Add role assignment → Log Analytics Reader
+3. Select Managed Identity → Function App → Your function app
+
+## 🧹 Cleanup
+
+To remove all deployed resources:
+
+**PowerShell:**
+```powershell
+.\cleanup.ps1 -ResourceGroupName "sentinel-activity-maps-rg"
+```
+
+**Bash:**
+```bash
+./cleanup.sh --resource-group "sentinel-activity-maps-rg"
+```
+
+**Or manually:**
+```bash
+az group delete --name sentinel-activity-maps-rg --yes --no-wait
+```
+
+## 🛠️ Troubleshooting
 
 ## 📡 API Reference
 

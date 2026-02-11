@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sentinel Maps V2 | Simple Azure Maps</title>
+
+  <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3/atlas.min.css" />
+  <script src="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3/atlas.min.js"></script>
+
+  <link rel="stylesheet" href="./styles/app.css" />
+</head>
+<body>
+  <!--
+    App Shell
+    This layout uses flexbox so the left panel takes real width.
+    The map resizes when the panel opens or closes.
+  -->
+  <div id="appShell" class="app-shell">
+
+    <!-- Left threat details panel (hidden by default) -->
+    <aside id="leftPanel" class="left-panel hidden" aria-hidden="true">
+      <div class="panel-header">
+        <div style="display: flex; gap: 8px; justify-content: space-between; width: 100%;">
+          <button id="showThreatMapBtn" type="button" title="Show threat map" style="background: #10b981; flex: 1;">☰ Threat Map</button>
+          <button id="panelHideBtn" type="button" title="Close panel" style="background: #ef4444; flex: 1;">✕ Close Menu</button>
+        </div>
+        <h2 id="panelTitle">Threat Details</h2>
+      </div>
+
+      <!-- Context about the selected region  -->
+      <div id="panelMeta" class="panel-meta"></div>
+
+      <!-- List of matching threat actors -->
+      <div id="panelList" class="panel-list"></div>
+    </aside>
+
+    <!-- Map container -->
+    <main id="mapHost" class="map-host">
+      <!-- Floating close button for left panel -->
+      <button id="floatingPanelCloseBtn" class="floating-panel-close hidden" type="button" title="Close threat details panel">
+        ✕ Close Details Panel
+      </button>
+      
+      <!-- Color legend for country view -->
+      <div id="countryLegend" class="country-legend hidden">
+        <h4>Threat Actors</h4>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #0080ff;"></div>
+          <div class="legend-label">1-5 actors</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #00ff00;"></div>
+          <div class="legend-label">6-15 actors</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #ffff00;"></div>
+          <div class="legend-label">16-30 actors</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #ff8000;"></div>
+          <div class="legend-label">31-50 actors</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #ff0000;"></div>
+          <div class="legend-label">50+ actors</div>
+        </div>
+      </div>
+      
+      <div id="map"></div>
+    </main>
+
+  </div>
+
+  <!-- App entry point -->
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
