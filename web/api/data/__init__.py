@@ -4,6 +4,7 @@ Uses managed identity to access private storage account.
 """
 import azure.functions as func
 import logging
+import json
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 import os
@@ -49,24 +50,55 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     
     try:
         # Use managed identity to access blob storage
-        credential = DefaultAzureCredential()
-        blob_service_client = BlobServiceClient(account_url=storage_url, credential=credential)
+        logger.info(f'Creating blob service client for {storage_url}')
+        try:
+            credential = DefaultAzureCredential()
+            logger.info('DefaultAzureCredential created')
+        except Exception as e:
+            logger.error(f'Failed to create credential: {e}')
+            raise
+        
+        try:
+            blob_service_client = BlobServiceClient(account_url=storage_url, credential=credential)
+            logger.info('BlobServiceClient created')
+        except Exception as e:
+            logger.error(f'Failed to create BlobServiceClient: {e}')
+            raise
         
         # Get the blob client
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+        logger.info(f'Blob client created for {container_name}/{blob_name}')
         
         # Check if blob exists
-        if not blob_client.exists():
+        logger.info('Checking if blob exists...')
+        try:
+            exists = blob_client.exists()
+            logger.info(f'Blob exists check result: {exists}')
+        except Exception as e:
+            logger.error(f'Failed to check if blob exists: {e}')
+            raise
+            
+        if not exists:
             # List available blobs to help with debugging
-            container_client = blob_service_client.get_container_client(container_name)
-            blobs = [blob.name for blob in container_client.list_blobs()]
-            logger.error(f'Blob not found: {blob_name}. Available blobs: {blobs}')
-            return func.HttpResponse(
-                f'{{"error": "File not found: {blob_name}", "available_files": {blobs}}}',
-                status_code=404,
-                mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': '*'}
-            )
+            logger.info('Blob not found, listing available blobs...')
+            try:
+                container_client = blob_service_client.get_container_client(container_name)
+                blobs = [blob.name for blob in container_client.list_blobs()]
+                logger.error(f'Blob not found: {blob_name}. Available blobs: {blobs}')
+                return func.HttpResponse(
+                    f'{{"error": "File not found: {blob_name}", "available_files": {json.dumps(blobs)}}}',
+                    status_code=404,
+                    mimetype='application/json',
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
+            except Exception as e:
+                logger.error(f'Failed to list blobs: {e}')
+                return func.HttpResponse(
+                    f'{{"error": "File not found: {blob_name}", "list_error": "{str(e)}"}}',
+                    status_code=404,
+                    mimetype='application/json',
+                    headers={'Access-Control-Allow-Origin': '*'}
+                )
         
         # Download the blob
         logger.info(f'Downloading blob: {container_name}/{blob_name}')
