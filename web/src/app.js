@@ -33,7 +33,7 @@ async function initMap() {
   const cfg = await loadConfig();
   
   const azureMapsKey = cfg.azureMapsKey || '';
-  const geoJsonUrl = `${cfg.storageAccountUrl}/${cfg.datasetsContainer}/threat-intel-indicators.geojson`;
+  const dataApiUrl = '/api/data/threat-intel';  // Use API proxy instead of direct storage access
 
   if (!azureMapsKey) {
     console.error('Azure Maps key not configured');
@@ -43,8 +43,7 @@ async function initMap() {
 
   console.log('Initializing map with config:', {
     hasKey: !!azureMapsKey,
-    storageUrl: cfg.storageAccountUrl,
-    dataUrl: geoJsonUrl
+    dataUrl: dataApiUrl
   });
 
   // Create the map
@@ -68,10 +67,9 @@ async function initMap() {
 
     // Try to load GeoJSON data
     if (geoJsonUrl) {
-      try {
-        console.log('Loading threat intelligence data from:', geoJsonUrl);
-        const response = await fetch(geoJsonUrl);
-        if (response.ok) {
+    try {
+      console.log('Loading threat intelligence data from:', dataApiUrl);
+      const response = await fetch(dataApi
           const geojson = await response.json();
           dataSource.add(geojson);
           console.log('Threat intelligence data loaded:', geojson.features?.length || 0, 'features');
