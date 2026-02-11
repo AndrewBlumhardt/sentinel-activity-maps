@@ -24,37 +24,20 @@ Deploy to Azure in ~5 minutes with one command:
 
 **Requirements:** Owner or Contributor role on subscription or target resource group
 
-👉 **[Full Deployment Guide](DEPLOYMENT.md)** | **[Local Development](LOCAL_DEVELOPMENT.md)** | **[Quick Start](QUICKSTART.md)**
+👉 **[Full Deployment Guide](docs/DEPLOYMENT.md)** | **[Local Development](docs/LOCAL_DEVELOPMENT.md)** | **[Quick Start](docs/QUICKSTART.md)**
 
-## 🔄 Update Function Code
+## 🔄 Automated Deployments
 
-After initial deployment, use these scripts for quick code-only updates:
+Code updates deploy automatically via **GitHub Actions** when you push to `main`:
 
-**PowerShell:**
-```powershell
-.\update-function.ps1 -FunctionAppName "sentinel-activity-maps-func-12345"
+- ✅ Triggers on any changes to `api/` folder
+- ✅ Auto-builds and deploys function code
+- ✅ No manual deployment needed after initial setup
+- ✅ See workflow status in GitHub Actions tab
 
-# For Azure Government
-.\update-function.ps1 -FunctionAppName "your-func-name" -Cloud AzureUSGovernment
-```
-
-**Bash:**
-```bash
-./update-function.sh --function-app "sentinel-activity-maps-func-12345"
-
-# For Azure Government
-./update-function.sh --function-app "your-func-name" --cloud AzureUSGovernment
-```
-
-**What these scripts do:**
-- ✅ Only update function code (faster than full deployment)
-- ✅ Don't modify app settings or infrastructure
-- ✅ Automatically restart and warm up the function app
-- ✅ Support both Azure Commercial and Government clouds
+**Workflow:** `.github/workflows/deploy-function.yml`
 
 **Note:** Allow 30-60 seconds after deployment for the function to fully start (cold start). If you get 404 errors immediately after deployment, wait a minute and try again.
-
-**For CI/CD:** Use the GitHub Actions workflow at `.github/workflows/deploy-function.yml` for automated deployments on every push.
 
 ## 🎯 Purpose
 
@@ -332,20 +315,14 @@ Or via Azure Portal:
 
 To remove all deployed resources:
 
-**PowerShell:**
-```powershell
-.\cleanup.ps1 -ResourceGroupName "sentinel-activity-maps-rg"
+```bash
+az group delete --name rg-sentinel-activity-maps --yes --no-wait
 ```
 
-**Bash:**
-```bash
-./cleanup.sh --resource-group "sentinel-activity-maps-rg"
-```
-
-**Or manually:**
-```bash
-az group delete --name sentinel-activity-maps-rg --yes --no-wait
-```
+Or via Azure Portal:
+1. Navigate to Resource Groups
+2. Select `rg-sentinel-activity-maps`
+3. Click "Delete resource group" and confirm
 
 ## 🛠️ Troubleshooting
 
