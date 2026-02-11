@@ -66,19 +66,18 @@ async function initMap() {
     map.sources.add(dataSource);
 
     // Try to load GeoJSON data
-    if (geoJsonUrl) {
     try {
       console.log('Loading threat intelligence data from:', dataApiUrl);
-      const response = await fetch(dataApi
-          const geojson = await response.json();
-          dataSource.add(geojson);
-          console.log('Threat intelligence data loaded:', geojson.features?.length || 0, 'features');
-        } else {
-          console.warn('Failed to load threat data:', response.status);
-        }
-      } catch (error) {
-        console.warn('Error loading threat data:', error);
+      const response = await fetch(dataApiUrl);
+      if (response.ok) {
+        const geojson = await response.json();
+        dataSource.add(geojson);
+        console.log('Threat intelligence data loaded:', geojson.features?.length || 0, 'features');
+      } else {
+        console.warn('Failed to load threat data:', response.status);
       }
+    } catch (error) {
+      console.warn('Error loading threat data:', error);
     }
 
     // Add bubble layer for threat indicators
