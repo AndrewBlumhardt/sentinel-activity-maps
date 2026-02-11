@@ -9,7 +9,7 @@
       "methods": [
         "get"
       ],
-      "route": "data/threat-intel"
+      "route": "data/{filename}"
     },
     {
       "type": "http",

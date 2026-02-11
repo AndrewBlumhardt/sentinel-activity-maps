@@ -14,13 +14,30 @@ logger = logging.getLogger(__name__)
 def main(req: func.HttpRequest) -> func.HttpResponse:
     """
     Returns threat intelligence GeoJSON data from blob storage.
+    Route parameter 'filename' determines which file to fetch.
     """
     logger.info('Data API endpoint called')
+    
+    # Get filename from route parameter
+    filename = req.route_params.get('filename')
+    if not filename:
+        return func.HttpResponse(
+            '{"error": "No filename specified"}',
+            status_code=400,
+            mimetype='application/json'
+        )
+    
+    # Add .geojson extension if not present
+    if not filename.endswith('.geojson'):
+        blob_name = f'{filename}.geojson'
+    else:
+        blob_name = filename
+    
+    logger.info(f'Requesting blob: {blob_name}')
     
     # Get storage configuration
     storage_url = os.environ.get('STORAGE_ACCOUNT_URL', '')
     container_name = os.environ.get('STORAGE_CONTAINER_DATASETS', 'datasets')
-    blob_name = 'threat-intel-indicators.geojson'
     
     if not storage_url:
         logger.error('STORAGE_ACCOUNT_URL not configured')
@@ -37,6 +54,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         
         # Get the blob client
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+        
+        # Check if blob exists
+        if not blob_client.exists():
+            # List available blobs to help with debugging
+            container_client = blob_service_client.get_container_client(container_name)
+            blobs = [blob.name for blob in container_client.list_blobs()]
+            logger.error(f'Blob not found: {blob_name}. Available blobs: {blobs}')
+            return func.HttpResponse(
+                f'{{"error": "File not found: {blob_name}", "available_files": {blobs}}}',
+                status_code=404,
+                mimetype='application/json',
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
         
         # Download the blob
         logger.info(f'Downloading blob: {container_name}/{blob_name}')

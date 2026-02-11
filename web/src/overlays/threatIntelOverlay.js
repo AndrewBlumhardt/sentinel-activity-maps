@@ -38,7 +38,30 @@ async function enable(map) {
     console.log("API response status:", response.status, response.statusText);
     
     if (!response.ok) {
-      throw new Error(`Failed to load threat intel: ${response.status} ${response.statusText}`);
+      // Try to get error details
+      const errorText = await response.text();
+      console.error("API error response:", errorText);
+      
+      let errorMsg = `Failed to load threat intel: ${response.status} ${response.statusText}`;
+      
+      // Parse error response if JSON
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.error) {
+          errorMsg = errorData.error;
+        }
+        if (errorData.available_files) {
+          console.log("Available files in blob storage:", errorData.available_files);
+          errorMsg += `\n\nAvailable files: ${errorData.available_files.join(", ")}`;
+        }
+      } catch (e) {
+        // Not JSON, use text
+        if (errorText) {
+          errorMsg += `\n\n${errorText}`;
+        }
+      }
+      
+      throw new Error(errorMsg);
     }
 
     const geojson = await response.json();
