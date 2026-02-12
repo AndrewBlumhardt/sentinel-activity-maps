@@ -75,8 +75,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logger.info('Checking if blob exists...')
         exists = blob_client.exists()
         logger.info(f'✅ Blob exists: {exists}')
-        
-        logger.info(f'✅ Blob exists: {exists}')
             
         if not exists:
             # List available blobs to help with debugging
