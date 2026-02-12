@@ -87,3 +87,5 @@ The app is automatically deployed via GitHub Actions when changes are pushed to 
 - Safari (latest)
 
 Requires JavaScript enabled and modern browser with ES6 support.
+
+
