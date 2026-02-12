@@ -54,6 +54,7 @@ sources:
       | extend Label = parse_json(tostring(Data.labels))[0]
       | extend Id = tostring(Data.id)
       | summarize arg_max(TimeGenerated, *) by Id
+      | summarize arg_max(TimeGenerated, *) by ObservableValue
       | where Pattern contains "network" 
       | project
           TimeGenerated,
