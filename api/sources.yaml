@@ -48,12 +48,23 @@ sources:
     auto_generate_geojson: true  # Automatically generate GeoJSON after geo enrichment
     kql_query: |
       ThreatIntelIndicators
+      | where TimeGenerated > ago(15d)
       | extend Description = Data.description
       | extend Type = parse_json(tostring(Data.indicator_types))[0]
       | extend Label = parse_json(tostring(Data.labels))[0]
-      | summarize arg_max(TimeGenerated, *) by ObservableValue
-      | where Pattern contains "network"
-      | project TimeGenerated, ObservableValue, SourceSystem, Type, Label, Confidence, Description, Created, IsActive
+      | extend Id = tostring(Data.id)
+      | summarize arg_max(TimeGenerated, *) by Id
+      | where Pattern contains "network" 
+      | project
+          TimeGenerated,
+          ObservableValue,
+          SourceSystem,
+          Type,
+          Label,
+          Confidence,
+          Description,
+          Created,
+          IsActive
       | order by TimeGenerated desc
     columns:
       - TimeGenerated
