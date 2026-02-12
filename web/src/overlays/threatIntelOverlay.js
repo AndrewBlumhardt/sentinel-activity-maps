@@ -88,23 +88,24 @@ async function enable(map) {
     console.log(`Threat intel count range: 1 to ${maxCount}`);
 
     // Add bubble layer for indicators
+    // Use fixed stops to avoid duplicate values in interpolate expression
     const bubbleLayer = new atlas.layer.BubbleLayer(dataSource, THREAT_INTEL_LAYER_ID, {
-      radius: [
+      radius: maxCount > 1 ? [
         "interpolate",
         ["linear"],
         ["coalesce", ["get", "count"], ["get", "Count"], 1],
-        1, 5,
-        Math.max(maxCount / 2, 1), 15,
+        1, 8,
+        Math.ceil(maxCount / 2), 15,
         maxCount, 25
-      ],
-      color: [
+      ] : 10,
+      color: maxCount > 1 ? [
         "interpolate",
         ["linear"],
         ["coalesce", ["get", "count"], ["get", "Count"], 1],
         1, "#ff6b6b",
-        Math.max(maxCount / 2, 1), "#ff0000",
+        Math.ceil(maxCount / 2), "#ff0000",
         maxCount, "#8b0000"
-      ],
+      ] : "#ff0000",
       strokeColor: "#ffffff",
       strokeWidth: 1,
       opacity: 0.7,
