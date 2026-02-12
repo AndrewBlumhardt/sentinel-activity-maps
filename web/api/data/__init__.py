@@ -5,7 +5,7 @@ Uses managed identity to access private storage account.
 import azure.functions as func
 import logging
 import json
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
 from azure.storage.blob import BlobServiceClient
 import os
 
@@ -17,7 +17,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     Returns threat intelligence GeoJSON data from blob storage.
     Route parameter 'filename' determines which file to fetch.
     """
-    logger.info('Data API endpoint called')
+    logger.info(f'Data API endpoint called: {req.method}')
+    
+    # Handle CORS preflight  
+    if req.method == 'OPTIONS':
+        return func.HttpResponse(
+            status_code=200,
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            }
+        )
     
     # Get filename from route parameter
     filename = req.route_params.get('filename')
@@ -52,11 +63,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Use managed identity to access blob storage
         logger.info(f'Creating blob service client for {storage_url}')
         try:
-            credential = DefaultAzureCredential()
-            logger.info('DefaultAzureCredential created')
+            # Try ManagedIdentityCredential first (works better in Azure Static Web Apps)
+            credential = ManagedIdentityCredential()
+            logger.info('ManagedIdentityCredential created')
         except Exception as e:
-            logger.error(f'Failed to create credential: {e}')
-            raise
+            logger.warning(f'ManagedIdentityCredential failed, trying DefaultAzureCredential: {e}')
+            try:
+                credential = DefaultAzureCredential()
+                logger.info('DefaultAzureCredential created')
+            except Exception as e2:
+                logger.error(f'All credential methods failed: {e2}')
+                raise
         
         try:
             blob_service_client = BlobServiceClient(account_url=storage_url, credential=credential)
