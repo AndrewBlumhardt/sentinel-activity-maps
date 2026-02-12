@@ -165,7 +165,7 @@ def _refresh_source_with_cache(source, log_analytics, blob_storage, refresh_poli
     logger.info(f"[{correlation_id}] Processing source: {source_id}")
     
     # Get blob client for TSV file
-    tsv_blob_client = blob_storage.blob_service_client.get_blob_client(
+    tsv_blob_client = blob_storage.service_client.get_blob_client(
         container="datasets",
         blob=source.output_filename
     )
@@ -328,7 +328,7 @@ def _refresh_source_with_cache(source, log_analytics, blob_storage, refresh_poli
                         geojson_filename = source.output_filename.replace('.tsv', '.geojson')
                         temp_geojson_filename = f"{geojson_filename}.tmp"
                         
-                        blob_client = blob_storage.blob_service_client.get_blob_client(
+                        blob_client = blob_storage.service_client.get_blob_client(
                             container="datasets",
                             blob=temp_geojson_filename
                         )
@@ -348,11 +348,11 @@ def _refresh_source_with_cache(source, log_analytics, blob_storage, refresh_poli
                         logger.info(f"[{correlation_id}] GeoJSON generated: {len(features)} features ({skipped} skipped - no coordinates)")
                         
                         # Atomic rename: .tmp.geojson → .geojson
-                        source_blob = blob_storage.blob_service_client.get_blob_client(
+                        source_blob = blob_storage.service_client.get_blob_client(
                             container="datasets",
                             blob=temp_geojson_filename
                         )
-                        target_blob = blob_storage.blob_service_client.get_blob_client(
+                        target_blob = blob_storage.service_client.get_blob_client(
                             container="datasets",
                             blob=geojson_filename
                         )
@@ -369,11 +369,11 @@ def _refresh_source_with_cache(source, log_analytics, blob_storage, refresh_poli
         
         # Atomic rename: .tmp → production file
         logger.info(f"[{correlation_id}] Atomic file replacement for {source_id}")
-        source_blob = blob_storage.blob_service_client.get_blob_client(
+        source_blob = blob_storage.service_client.get_blob_client(
             container="datasets",
             blob=temp_filename
         )
-        target_blob = blob_storage.blob_service_client.get_blob_client(
+        target_blob = blob_storage.service_client.get_blob_client(
             container="datasets",
             blob=source.output_filename
         )
@@ -398,7 +398,7 @@ def _refresh_source_with_cache(source, log_analytics, blob_storage, refresh_poli
         logger.error(f"[{correlation_id}] Error during refresh: {e}", exc_info=True)
         # Clean up temp files on error
         try:
-            temp_blob = blob_storage.blob_service_client.get_blob_client(
+            temp_blob = blob_storage.service_client.get_blob_client(
                 container="datasets",
                 blob=temp_filename
             )
