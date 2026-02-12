@@ -57,10 +57,12 @@ class LogAnalyticsClient:
             logger.info(f"Executing query against workspace {self.workspace_id}")
             logger.debug(f"Query: {kql_query[:200]}...")  # Log first 200 chars
             
+            # Set server timeout to 10 minutes for large queries
             response = self.client.query_workspace(
                 workspace_id=self.workspace_id,
                 query=kql_query,
-                timespan=timespan
+                timespan=timespan,
+                server_timeout=600  # 10 minutes for large result sets
             )
             
             if response.status == LogsQueryStatus.SUCCESS:
