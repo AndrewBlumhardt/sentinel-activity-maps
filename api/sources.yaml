@@ -53,7 +53,6 @@ sources:
       | extend Label = parse_json(tostring(Data.labels))[0]
       | summarize arg_max(TimeGenerated, *) by ObservableValue
       | where Pattern contains "network"
-      | where ObservableValue matches regex @"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"  // Only IPv4 addresses
       | project TimeGenerated, ObservableValue, SourceSystem, Type, Label, Confidence, Description, Created, IsActive
       | order by TimeGenerated desc
     columns:
