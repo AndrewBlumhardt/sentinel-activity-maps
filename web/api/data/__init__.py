@@ -62,31 +62,50 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         # Use managed identity to access blob storage
         logger.info(f'Creating blob service client for {storage_url}')
-        try:
-            # Try ManagedIdentityCredential first (works better in Azure Static Web Apps)
-            credential = ManagedIdentityCredential()
-            logger.info('ManagedIdentityCredential created')
-        except Exception as e:
-            logger.warning(f'ManagedIdentityCredential failed, trying DefaultAzureCredential: {e}')
-            try:
-                credential = DefaultAzureCredential()
-                logger.info('DefaultAzureCredential created')
-            except Exception as e2:
-                logger.error(f'All credential methods failed: {e2}')
-                raise
         
+        # Step 1: Create credential
+        try:
+            credential = ManagedIdentityCredential()
+            logger.info('✅ Step 1: ManagedIdentityCredential created')
+        except Exception as e:
+            error_msg = f'❌ Step 1 FAILED: ManagedIdentityCredential creation - {type(e).__name__}: {str(e)}'
+            logger.error(error_msg)
+            return func.HttpResponse(
+                json.dumps({"error": error_msg, "step": 1}),
+                status_code=500,
+                mimetype='application/json',
+                headers={'Access-Control-Allow-Origin': '*'}
+            )
+        
+        # Step 2: Create BlobServiceClient
         try:
             blob_service_client = BlobServiceClient(account_url=storage_url, credential=credential)
-            logger.info('BlobServiceClient created')
+            logger.info('✅ Step 2: BlobServiceClient created')
         except Exception as e:
-            logger.error(f'Failed to create BlobServiceClient: {e}')
-            raise
-        
-        # Get the blob client
+            error_msg = f'❌ Step 2 FAILED: BlobServiceClient creation - {type(e).__name__}: {str(e)}'
+            logger.error(error_msg)
+          Step 3: Get blob client
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
-        logger.info(f'Blob client created for {container_name}/{blob_name}')
+        logger.info(f'✅ Step 3: Blob client created for {container_name}/{blob_name}')
         
-        # Check if blob exists
+        # Step 4: Check if blob exists (this is where auth actually happens)
+        logger.info('Step 4: Checking if blob exists (authenticating)...')
+        try:
+            exists = blob_client.exists()
+            logger.info(f'✅ Step 4: Blob exists check result: {exists}')
+        except Exception as e:
+            error_msg = f'❌ Step 4 FAILED: Authentication/exists check - {type(e).__name__}: {str(e)}'
+            logger.error(error_msg)
+            return func.HttpResponse(
+                json.dumps({
+                    "error": error_msg,
+                    "step": 4,
+                    "hint": "This usually means managed identity doesn't have Storage Blob Data Reader role or role hasn't propagated yet"
+                }),
+                status_code=500,
+                mimetype='application/json',
+                headers={'Access-Control-Allow-Origin': '*'}
+            )f blob exists
         logger.info('Checking if blob exists...')
         try:
             exists = blob_client.exists()
