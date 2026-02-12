@@ -1,7 +1,7 @@
 """
 Azure Functions app for Sentinel Activity Maps.
 HTTP-triggered function to refresh threat intelligence datasets.
-Updated: February 2026 - Optimized for large datasets with 10-minute timeouts.
+Updated: February 2026 - Optimized for large datasets (59K+ indicators).
 """
 import os
 import logging
