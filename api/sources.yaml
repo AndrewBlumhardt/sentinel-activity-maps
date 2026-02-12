@@ -41,7 +41,7 @@ sources:
     enabled: true
     refresh_threshold_hours: 24  # Refresh if file older than this (configurable)
     query_time_window_hours: 360  # 15 days (initial lookback and max refresh window)
-    incremental: true
+    incremental: false  # Always query full 15-day window
     incremental_overlap_minutes: 30
     output_filename: "threat-intel-indicators.tsv"
     auto_enrich_geo: true  # Automatically enrich with geolocation after refresh
